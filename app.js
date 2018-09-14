@@ -4,16 +4,12 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
-const indexRouter = require('./MyServer/routes/index');
-const dummyRouter = require('./MyServer/routes/dummy');
-const exercisesRouter = require('./MyServer/routes/exercises');
-const createExerciseRouter = require('./MyServer/routes/createExercise');
+const indexRouter = require('./api/routes/index');
+const dummyRouter = require('./api/routes/dummy');
+const exercisesRouter = require('./api/routes/exercises');
+const createExerciseRouter = require('./api/routes/createExercise');
 
 var app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'MyServer', 'views'));
-app.set('view engine', 'pug');
 
 app.use(logger('dev'));
 app.use(express.json());

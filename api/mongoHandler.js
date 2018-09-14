@@ -9,7 +9,7 @@ module.exports.AddExercise = async (exercise) => {
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        await dbo.collection(exerciseCollection).insertOne(exerciseObj);
+        return toHexString(await dbo.collection(exerciseCollection).insertOne(exerciseObj).insertedId.id);
     } catch (error) {
         console.log(error);
     }
@@ -17,6 +17,12 @@ module.exports.AddExercise = async (exercise) => {
         await conn.close();
     }
 }
+
+function toHexString(byteArray) {
+    return Array.from(byteArray, function(byte) {
+      return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+    }).join('')
+  }
 
 module.exports.DropCollection = async () => {
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
