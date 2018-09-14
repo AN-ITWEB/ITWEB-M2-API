@@ -1,0 +1,31 @@
+extends layout
+
+block content
+  .main.container
+    .row
+      .col-md-6.col-md-offset-3
+        h1.display-4.m-b-2 Sign Up
+
+        // register form
+        form(method='POST' action='/exercises')
+          div.form-group
+            label(for='Exercise') Exercise: 
+            br
+            input#name.form-control(type='text', placeholder='Exercise name' name='Name')
+          br
+          div.form-group
+            label(for='Description') Description:
+            br
+            input#name.form-control(type='text', placeholder='Short to do description' name='Description')
+          br
+          div.form-group
+            label(for='Set') Set:
+            br
+            input#name.form-control(type='text', placeholder='How many sets?' name='Set')
+          br
+          div.form-group
+            label(for='RepsTime') RepsTime:
+            br
+            input#name.form-control(type='text', placeholder='How many Reps/Time?' name='RepsTime')
+          br
+          input(type="submit", value="Sign up")
