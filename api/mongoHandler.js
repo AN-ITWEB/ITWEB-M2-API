@@ -40,7 +40,7 @@ module.exports.RemoveExerciseFromProgram = async (exerciseId, programId) => {
 }
 
 module.exports.AddExerciseToProgram = async (exercise, programId) => {
-    var exerciseObj = {id: new ObjectId(), Exercise: exercise.Exercise, Description: exercise.Description, Set: exercise.Set, RepsTime: exercise.RepsTime };
+    var exerciseObj = {id: new ObjectId(), Exercise: exercise.Exercise, Description: exercise.Description, Set: exercise.Set, RepsTime: exercise.RepsTime, Logged: false };
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
@@ -56,6 +56,19 @@ module.exports.AddExerciseToProgram = async (exercise, programId) => {
     }
 }
 
+module.exports.updateLogged = async (logged, programId, exerciseId) => {
+    var conn = await MongoClient.connect(url, {useNewUrlParser: true});
+    try {
+        var dbo = conn.db(dbName);
+        await dbo.collection("programs").updateOne({_id: ObjectId(programId), "Exercises.id": ObjectId(exerciseId)}, {"$set":{"Exercises.$.Logged":logged}})
+    } catch (error) {
+        console.log(error);
+    }
+    finally{
+        await conn.close();
+    }
+}
+
 module.exports.AddProgram = async (program) => {
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
@@ -63,6 +76,19 @@ module.exports.AddProgram = async (program) => {
         var insertedObj = await dbo.collection("programs").insertOne(program)
         var obj = {_id: toHexString(insertedObj.insertedId.id), Owner: program.Owner, Exercises: program.Exercises}
         return obj;
+    } catch (error) {
+        console.log(error);
+    }
+    finally{
+        await conn.close();
+    }
+}
+
+module.exports.removeProgram = async (programId) => {
+    var conn = await MongoClient.connect(url, {useNewUrlParser: true});
+    try {
+        var dbo = conn.db(dbName);
+        await dbo.collection("programs").deleteOne({_id: ObjectId(programId)})
     } catch (error) {
         console.log(error);
     }

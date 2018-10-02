@@ -18,6 +18,18 @@ module.exports.dropCollection = async (req, res) => {
     res.redirect('/')
 };
 
+module.exports.removeProgram = async (req, res) => {
+    await db.removeProgram(req.params.programId);
+    res.status(200);
+    res.json(req.body.programId);
+};
+
+module.exports.updateLogged = async (req, res) => {
+    await db.updateLogged(req.body.Logged, req.body.programId, req.body.exerciseId);
+    res.status(200);
+    res.json(req.body);
+};
+
 module.exports.AddExerciseToProgram = async (req, res) => {
     var data = await db.AddExerciseToProgram(req.body.exercise, req.body.programId);
     res.status(201);
