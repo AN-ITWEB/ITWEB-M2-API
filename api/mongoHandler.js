@@ -5,7 +5,7 @@ const dbName = 'fitness';
 const exerciseCollection = 'exercises';
 
 module.exports.AddExercise = async (exercise) => {
-    var exerciseObj = { Exercise: exercise.Name, Description: exercise.Description, Set: exercise.Set, RepsTime: exercise.RepsTime };
+    var exerciseObj = {authToken , Exercise: exercise.Name, Description: exercise.Description, Set: exercise.Set, RepsTime: exercise.RepsTime };
 
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
@@ -19,17 +19,18 @@ module.exports.AddExercise = async (exercise) => {
     }
 }
 
-module.exports.RemoveExerciseFromProgram = async (exerciseId, programId) => {
+module.exports.RemoveExerciseFromProgram = async (authToken ,exerciseId, programId) => {
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId)})
-
-        var filteredExercises = program['Exercises'].filter(function(value, index, arr){
-            return value.id != exerciseId;
-        });
-        program.Exercises = filteredExercises
-        await dbo.collection("programs").replaceOne({"_id" : ObjectId(programId)}, {"Owner" : program.Owner, "Exercises" : filteredExercises} );
+        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId), "Owner.token": authToken})
+        if(program != null){
+            var filteredExercises = program['Exercises'].filter(function(value, index, arr){
+                return value.id != exerciseId;
+            });
+            program.Exercises = filteredExercises
+            await dbo.collection("programs").replaceOne({"_id" : ObjectId(programId)}, {"Owner" : program.Owner, "Exercises" : filteredExercises} );
+        }
         return program
     } catch (error) {
         console.log(error);
@@ -39,14 +40,16 @@ module.exports.RemoveExerciseFromProgram = async (exerciseId, programId) => {
     }
 }
 
-module.exports.AddExerciseToProgram = async (exercise, programId) => {
+module.exports.AddExerciseToProgram = async (authToken, exercise, programId) => {
     var exerciseObj = {id: new ObjectId(), Exercise: exercise.Exercise, Description: exercise.Description, Set: exercise.Set, RepsTime: exercise.RepsTime, Logged: false };
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId)})
-        program['Exercises'].push(exerciseObj);
-        await dbo.collection("programs").replaceOne({"_id" : ObjectId(programId)}, {"Owner" : program.Owner, "Exercises" : program.Exercises} );
+        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId), "Owner.token": authToken})
+        if(program != null){
+            program['Exercises'].push(exerciseObj);
+            await dbo.collection("programs").replaceOne({"_id" : ObjectId(programId)}, {"Owner" : program.Owner, "Exercises" : program.Exercises} );
+        }
         return program
     } catch (error) {
         console.log(error);
@@ -56,11 +59,14 @@ module.exports.AddExerciseToProgram = async (exercise, programId) => {
     }
 }
 
-module.exports.updateLogged = async (logged, programId, exerciseId) => {
+module.exports.updateLogged = async (authToken, Logged, programId, exerciseId) => {
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        await dbo.collection("programs").updateOne({_id: ObjectId(programId), "Exercises.id": ObjectId(exerciseId)}, {"$set":{"Exercises.$.Logged":logged}})
+        var data = await dbo.collection("programs").updateOne({_id: ObjectId(programId), "Exercises.id": ObjectId(exerciseId), "Owner.token": authToken}, {"$set":{"Exercises.$.Logged":Logged}})
+        if(data.matchedCount == 1)
+            return Logged
+        return null
     } catch (error) {
         console.log(error);
     }
@@ -84,11 +90,14 @@ module.exports.AddProgram = async (program) => {
     }
 }
 
-module.exports.removeProgram = async (programId) => {
+module.exports.removeProgram = async (authToken, programId) => {
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        await dbo.collection("programs").deleteOne({_id: ObjectId(programId)})
+        var data = await dbo.collection("programs").deleteOne({_id: ObjectId(programId), "Owner.token": authToken})
+        if(data.deletedCount == 1)
+            return data.deletedCount
+        return null
     } catch (error) {
         console.log(error);
     }
