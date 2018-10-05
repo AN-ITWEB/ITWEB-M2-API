@@ -23,7 +23,7 @@ module.exports.RemoveExerciseFromProgram = async (authToken ,exerciseId, program
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId), "Owner.token": authToken})
+        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId), "Owner.id": authToken})
         if(program != null){
             var filteredExercises = program['Exercises'].filter(function(value, index, arr){
                 return value.id != exerciseId;
@@ -45,7 +45,7 @@ module.exports.AddExerciseToProgram = async (authToken, exercise, programId) => 
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId), "Owner.token": authToken})
+        var program = await dbo.collection("programs").findOne({"_id" : ObjectId(programId), "Owner.id": authToken})
         if(program != null){
             program['Exercises'].push(exerciseObj);
             await dbo.collection("programs").replaceOne({"_id" : ObjectId(programId)}, {"Owner" : program.Owner, "Exercises" : program.Exercises} );
@@ -63,7 +63,7 @@ module.exports.updateLogged = async (authToken, Logged, programId, exerciseId) =
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        var data = await dbo.collection("programs").updateOne({_id: ObjectId(programId), "Exercises.id": ObjectId(exerciseId), "Owner.token": authToken}, {"$set":{"Exercises.$.Logged":Logged}})
+        var data = await dbo.collection("programs").updateOne({_id: ObjectId(programId), "Exercises.id": ObjectId(exerciseId), "Owner.id": authToken}, {"$set":{"Exercises.$.Logged":Logged}})
         if(data.matchedCount == 1)
             return Logged
         return null
@@ -94,7 +94,7 @@ module.exports.removeProgram = async (authToken, programId) => {
     var conn = await MongoClient.connect(url, {useNewUrlParser: true});
     try {
         var dbo = conn.db(dbName);
-        var data = await dbo.collection("programs").deleteOne({_id: ObjectId(programId), "Owner.token": authToken})
+        var data = await dbo.collection("programs").deleteOne({_id: ObjectId(programId), "Owner.id": authToken})
         if(data.deletedCount == 1)
             return data.deletedCount
         return null
