@@ -4,8 +4,6 @@ const ax = require('axios');
 var jwt = require('jsonwebtoken');
 
 var googleVerificationSite = 'https://accounts.google.com/.well-known/openid-configuration';
-var modulus = '';
-var exponent = '';
 
 module.exports.programs = async (req, res) => {
     var id = await getIdFromToken(req.headers.authorization)
@@ -55,14 +53,13 @@ module.exports.RemoveExerciseFromProgram = async (req, res) => {
 };
 
 async function getIdFromToken(token){
-    let decodedToken;
-    await retrieveModulusAndExponent();
-    jwt.verify(token, getPem(this.modulus, this.exponent), (err, decode) => {
-        if(err) console.log(err);
-        decodedToken = decode;
-    })
-    console.log(decodedToken);
-    return decodedToken.sub
+    let key = await retrieveRsaKey();
+    let decodedToken = await validateJwtToken(token, key);  
+    
+    if(decodedToken != undefined){
+        console.log(decodedToken);
+        return decodedToken.sub;
+    }
 }
 
 function returnStatus(data, res, successCode){
@@ -75,9 +72,25 @@ function returnStatus(data, res, successCode){
     }
 }
 
-async function retrieveModulusAndExponent(){
+async function retrieveRsaKey(){
     var googleUrl = (await ax.get(googleVerificationSite)).data.jwks_uri;
     var data = (await ax.get(googleUrl)).data;
-    this.modulus = data.keys[1].n;
-    this.exponent = data.keys[1].e;
+    let modulus = data.keys[1].n;
+    let exponent = data.keys[1].e;
+    return getPem(modulus, exponent);
+}
+
+async function validateJwtToken(token, key){
+    let decodedToken;
+    jwt.verify(token, key, (err, decode) => {
+        if(err) console.log(err);
+        decodedToken = decode;
+    })
+
+    if(decodedToken.iss != 'https://accounts.google.com' && decodedToken.iss != 'accounts.google.com' ||
+        decodedToken.aud != '396889746308-1choukjth13ep88uthmjkd8u0dqm40el.apps.googleusercontent.com' ||
+        parseInt(decodedToken.exp) < (new Date().getTime() / 1000))
+        return undefined;
+
+    return decodedToken;
 }
